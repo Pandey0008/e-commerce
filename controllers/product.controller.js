@@ -2,8 +2,9 @@ const productCollection = require("../models/product.model");
 const { uploadImg } = require("../utils/cloudinary.utils");
 
 const addProduct = async (req, res) => {
-  // console.log(req.files);
+  console.log(req.files);
   let { name, description, price } = req.body;
+  
 
   let localFilePaths = req.files;
   let uploadPromises = localFilePaths.map((file) => uploadImg(file.path));
