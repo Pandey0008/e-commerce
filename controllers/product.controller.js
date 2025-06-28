@@ -2,34 +2,31 @@ const productCollection = require("../models/product.model");
 const { uploadImg } = require("../utils/cloudinary.utils");
 
 const addProduct = async (req, res) => {
-  console.log(req.files);
+  console.log(req.files); // verify buffer exists
+
   let { name, description, price } = req.body;
-  
+  price = Number(price);
 
-  let localFilePaths = req.files;
-  let uploadPromises = localFilePaths.map((file) => uploadImg(file.path));
+  const files = req.files;
 
-  let results;
   try {
-    results = await Promise.all(uploadPromises);
+    const uploadPromises = files.map((file) => uploadImg(file.buffer));
+    const results = await Promise.all(uploadPromises);
+    const imgArray = results.map((r) => ({ url: r.secure_url }));
+
+    const newProduct = await productCollection.create({
+      name,
+      description,
+      price,
+      images: imgArray,
+      seller: req.user._id,
+    });
+
+    res.status(201).json({ message: "Product created successfully" });
   } catch (error) {
-    console.error("Upload error:", error);
-    return res.status(500).json({ error: "Image upload failed" });
+    console.error("Error uploading product:", error);
+    res.status(500).json({ error: "Product upload failed", details: error.message });
   }
-
-  let imgArray = results.map((result) => ({ url: result.secure_url }));
-
-  console.log(imgArray);
-
-  let newProduct = await productCollection.create({
-    name,
-    description,
-    price,
-    images: imgArray,
-    seller: req.user._id,
-  });
-
-  res.status(201).json({ message: "Product created successfully" });
 };
 
 module.exports = {
